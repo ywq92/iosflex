@@ -3,25 +3,10 @@ import SwiftUI
 struct AppListView: View {
     @State private var searchText = ""
     @State private var selectedTab = 0 // 0: All, 1: User, 2: System
+    @StateObject private var appManager = AppManager.shared
     
-    // Mock Data
-    struct AppInfo: Identifiable {
-        let id = UUID()
-        let name: String
-        let bundleId: String
-        let icon: String // System image name for mock
-        let isSystem: Bool
-        let isRunning: Bool
-    }
-    
-    let apps = [
-        AppInfo(name: "微信", bundleId: "com.tencent.xin", icon: "message.fill", isSystem: false, isRunning: true),
-        AppInfo(name: "设置", bundleId: "com.apple.Preferences", icon: "gear", isSystem: true, isRunning: false),
-        AppInfo(name: "Safari", bundleId: "com.apple.mobilesafari", icon: "safari", isSystem: true, isRunning: true)
-    ]
-    
-    var filteredApps: [AppInfo] {
-        let filteredByType = apps.filter { app in
+    var filteredApps: [InstalledApp] {
+        let filteredByType = appManager.apps.filter { app in
             if selectedTab == 1 { return !app.isSystem }
             if selectedTab == 2 { return app.isSystem }
             return true
@@ -30,7 +15,7 @@ struct AppListView: View {
         if searchText.isEmpty {
             return filteredByType
         } else {
-            return filteredByType.filter { $0.name.contains(searchText) || $0.bundleId.contains(searchText) }
+            return filteredByType.filter { $0.name.localizedCaseInsensitiveContains(searchText) || $0.bundleId.localizedCaseInsensitiveContains(searchText) }
         }
     }
     
@@ -45,44 +30,52 @@ struct AppListView: View {
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
                 
-                List(filteredApps) { app in
-                    HStack {
-                        Image(systemName: app.icon)
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .cornerRadius(8)
-                            .foregroundColor(.blue)
-                        
-                        VStack(alignment: .leading) {
-                            Text(app.name)
-                                .font(.headline)
-                            Text(app.bundleId)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Spacer()
-                        
-                        if app.isRunning {
-                            Text("运行中")
-                                .font(.caption2)
-                                .padding(4)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundColor(.green)
-                                .cornerRadius(4)
-                        }
-                        
-                        Button(action: {
-                            // Action to inject or open settings
-                        }) {
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.gray)
+                if appManager.isLoading {
+                    ProgressView("加载应用列表中...")
+                } else {
+                    List(filteredApps) { app in
+                        NavigationLink(destination: PatchEditorView(targetApp: app)) {
+                            HStack {
+                                // Placeholder Icon
+                                Image(systemName: app.isSystem ? "gear" : "app.fill")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
+                                    .cornerRadius(8)
+                                    .foregroundColor(.blue)
+                                
+                                VStack(alignment: .leading) {
+                                    Text(app.name)
+                                        .font(.headline)
+                                    Text(app.bundleId)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                if app.isSystem {
+                                    Text("System")
+                                        .font(.caption2)
+                                        .padding(4)
+                                        .background(Color.gray.opacity(0.2))
+                                        .foregroundColor(.gray)
+                                        .cornerRadius(4)
+                                }
+                            }
                         }
                     }
                 }
             }
             .navigationTitle("应用列表")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .onAppear {
+                if appManager.apps.isEmpty {
+                    appManager.fetchApps()
+                }
+            }
+            .refreshable {
+                appManager.fetchApps()
+            }
         }
     }
 }
