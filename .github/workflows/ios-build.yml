@@ -1,0 +1,69 @@
+name: Build FlexCN IPA
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install Theos
+      run: |
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+        echo "THEOS=~/theos" >> $GITHUB_ENV
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Build Hook Dylib
+      run: |
+        export THEOS=~/theos
+        cd FlexCNHook
+        make package FINALPACKAGE=1
+      env:
+        THEOS: ${{ env.THEOS }}
+
+    - name: Generate Xcode Project
+      run: |
+        cd FlexCN
+        xcodegen
+
+    - name: Build App
+      run: |
+        cd FlexCN
+        xcodebuild -project FlexCN.xcodeproj \
+          -scheme FlexCN \
+          -configuration Release \
+          -archivePath ../build/FlexCN.xcarchive \
+          archive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+
+    - name: Package IPA
+      run: |
+        mkdir -p Payload
+        # Copy App Bundle
+        cp -R build/FlexCN.xcarchive/Products/Applications/FlexCN.app Payload/
+        
+        # Copy Dylib (if built successfully)
+        if [ -f FlexCNHook/.theos/obj/debug/FlexCNHook.dylib ]; then
+          mkdir -p Payload/FlexCN.app/Frameworks
+          cp FlexCNHook/.theos/obj/debug/FlexCNHook.dylib Payload/FlexCN.app/Frameworks/
+          # Note: Real injection requires optool/insert_dylib, skipping for pure packaging
+        fi
+
+        # Zip
+        zip -r FlexCN.ipa Payload
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: FlexCN-IPA
+        path: FlexCN.ipa

@@ -1,0 +1,13 @@
+.DS_Store
+*.swp
+*.o
+.theos/
+obj/
+_/*
+*.ipa
+*.deb
+.build/
+*.xcodeproj
+*.xcworkspace
+build/
+DerivedData/

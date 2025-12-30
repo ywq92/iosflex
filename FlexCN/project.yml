@@ -1,0 +1,28 @@
+name: FlexCN
+options:
+  bundleIdPrefix: com.yourname
+targets:
+  FlexCN:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: Sources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: "FlexCN"
+        CFBundleIdentifier: "com.yourname.FlexCN"
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.yourname.FlexCN
+      INFOPLIST_FILE: Info.plist
+      CURRENT_PROJECT_VERSION: 1
+      MARKETING_VERSION: 1.0.0
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGNING_ALLOWED: NO
