@@ -23,10 +23,10 @@ jobs:
 
     - name: Setup iOS SDK
       run: |
-        curl -L -o iOS16.5.sdk.tar.xz https://github.com/theos/sdks/releases/download/16.5/iOS16.5.sdk.tar.xz
+        curl -L -o iPhoneOS16.5.sdk.tar.xz https://github.com/theos/sdks/releases/download/16.5/iPhoneOS16.5.sdk.tar.xz
         mkdir -p ~/theos/sdks
-        tar -xf iOS16.5.sdk.tar.xz -C ~/theos/sdks
-        rm iOS16.5.sdk.tar.xz
+        tar -xf iPhoneOS16.5.sdk.tar.xz -C ~/theos/sdks
+        rm iPhoneOS16.5.sdk.tar.xz
 
     - name: Build Hook Dylib
       run: |
