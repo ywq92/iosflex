@@ -13,13 +13,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Install Dependencies
+      run: brew install ldid xcodegen
+
     - name: Install Theos
       run: |
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+        git clone --recursive https://github.com/theos/theos.git ~/theos
         echo "THEOS=~/theos" >> $GITHUB_ENV
 
-    - name: Install XcodeGen
-      run: brew install xcodegen
+    - name: Setup iOS SDK
+      run: |
+        curl -L -o iOS16.5.sdk.tar.xz https://github.com/theos/sdks/releases/download/16.5/iOS16.5.sdk.tar.xz
+        mkdir -p ~/theos/sdks
+        tar -xf iOS16.5.sdk.tar.xz -C ~/theos/sdks
+        rm iOS16.5.sdk.tar.xz
 
     - name: Build Hook Dylib
       run: |
