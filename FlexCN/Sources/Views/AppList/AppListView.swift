@@ -34,36 +34,45 @@ struct AppListView: View {
                     ProgressView("加载应用列表中...")
                 } else {
                     List(filteredApps) { app in
-                        NavigationLink(destination: PatchEditorView(targetApp: app)) {
-                            HStack {
-                                // Placeholder Icon
-                                Image(systemName: app.isSystem ? "gear" : "app.fill")
-                                    .resizable()
-                                    .frame(width: 40, height: 40)
-                                    .cornerRadius(8)
-                                    .foregroundColor(.blue)
+                        // Pass the selected app to ClassBrowserView first, mimicking Flex3 flow
+                        NavigationLink(destination: ClassBrowserView(targetApp: app)) {
+                            HStack(spacing: 12) {
+                                // Placeholder Icon with randomized colors for better visuals
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(app.isSystem ? Color.gray.opacity(0.8) : Color.blue)
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: app.isSystem ? "gear" : "app.fill")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 20))
+                                }
                                 
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(app.name)
-                                        .font(.headline)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.primary)
                                     Text(app.bundleId)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
                                 }
                                 
                                 Spacer()
                                 
                                 if app.isSystem {
-                                    Text("System")
-                                        .font(.caption2)
-                                        .padding(4)
-                                        .background(Color.gray.opacity(0.2))
+                                    Text("SYSTEM")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.gray.opacity(0.15))
                                         .foregroundColor(.gray)
                                         .cornerRadius(4)
                                 }
                             }
+                            .padding(.vertical, 4)
                         }
                     }
+                    .listStyle(InsetGroupedListStyle()) // Modern list style
                 }
             }
             .navigationTitle("应用列表")

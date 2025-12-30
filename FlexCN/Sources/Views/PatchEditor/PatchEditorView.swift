@@ -2,19 +2,50 @@ import SwiftUI
 
 struct PatchEditorView: View {
     var targetApp: InstalledApp? // Optional, passed from AppList
+    var className: String?
+    var methodName: String?
     
     @State private var patchName = "New Patch"
-    @State private var code = """
-    // Custom OC Code
-    id newImplementation(id self, SEL _cmd, int x) {
-        NSLog(@"Param x: %d", x);
-        return originalMethod(self, _cmd, x + 1);
-    }
-    """
+    @State private var code = ""
     
-    init(targetApp: InstalledApp? = nil) {
+    init(targetApp: InstalledApp? = nil, className: String? = nil, methodName: String? = nil) {
         self.targetApp = targetApp
-        _patchName = State(initialValue: targetApp != nil ? "Patch for \(targetApp!.name)" : "New Patch")
+        self.className = className
+        self.methodName = methodName
+        
+        let initialName: String
+        if let method = methodName {
+             initialName = "Hook \(method)"
+        } else if let app = targetApp {
+             initialName = "Patch for \(app.name)"
+        } else {
+             initialName = "New Patch"
+        }
+        _patchName = State(initialValue: initialName)
+        
+        // Generate Template Code
+        let cls = className ?? "TargetClass"
+        let sel = methodName ?? "targetMethod:"
+        let template = """
+        // HOOK: [\(cls) \(sel)]
+        
+        #import <Foundation/Foundation.h>
+        #import <UIKit/UIKit.h>
+        
+        %hook \(cls)
+        
+        \(sel) {
+            NSLog(@"[FlexCN] Executing \(sel)");
+            
+            // Call original implementation
+            %orig;
+            
+            // Add your custom logic here
+        }
+        
+        %end
+        """
+        _code = State(initialValue: template)
     }
     
     var body: some View {
@@ -28,6 +59,22 @@ struct PatchEditorView: View {
                         .foregroundColor(.gray)
                 } else {
                     Text("目标应用: 未选择")
+                }
+                
+                if let cls = className {
+                    HStack {
+                        Text("目标类")
+                        Spacer()
+                        Text(cls).font(.system(.body, design: .monospaced))
+                    }
+                }
+                
+                if let method = methodName {
+                    HStack {
+                        Text("目标方法")
+                        Spacer()
+                        Text(method).font(.system(.body, design: .monospaced))
+                    }
                 }
             }
             
