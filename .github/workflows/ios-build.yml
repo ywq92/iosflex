@@ -63,7 +63,7 @@ jobs:
         zip -r FlexCN.ipa Payload
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: FlexCN-IPA
         path: FlexCN.ipa
