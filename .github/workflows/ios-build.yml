@@ -29,8 +29,9 @@ jobs:
     - name: Build Hook Dylib
       run: |
         export THEOS=~/theos
+        export THEOS_DEVICE_IP=127.0.0.1
         cd FlexCNHook
-        make package FINALPACKAGE=1
+        make package FINALPACKAGE=1 messages=yes
       env:
         THEOS: ${{ env.THEOS }}
 
