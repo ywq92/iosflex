@@ -13,34 +13,43 @@ struct InstalledApp: Identifiable {
 class AppManager: ObservableObject {
     @Published var apps: [InstalledApp] = []
     @Published var isLoading = false
+    @Published var errorMessage: String? = nil
     
     static let shared = AppManager()
     
     func fetchApps() {
         isLoading = true
+        errorMessage = nil
+        
         DispatchQueue.global(qos: .userInitiated).async {
             var fetchedApps: [InstalledApp] = []
             
             // Get LSApplicationWorkspace class
             guard let workspaceClass = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type else {
-                print("Error: LSApplicationWorkspace not found")
-                DispatchQueue.main.async { self.isLoading = false }
+                DispatchQueue.main.async {
+                    self.errorMessage = "错误: 无法加载 LSApplicationWorkspace (系统组件缺失)"
+                    self.isLoading = false
+                }
                 return
             }
             
             // Get defaultWorkspace instance
             let selector = NSSelectorFromString("defaultWorkspace")
             guard let workspace = workspaceClass.perform(selector)?.takeUnretainedValue() as? NSObject else {
-                print("Error: Could not get defaultWorkspace")
-                DispatchQueue.main.async { self.isLoading = false }
+                DispatchQueue.main.async {
+                    self.errorMessage = "错误: 无法获取 defaultWorkspace"
+                    self.isLoading = false
+                }
                 return
             }
             
             // Get allInstalledApplications
             let allAppsSelector = NSSelectorFromString("allInstalledApplications")
             guard let proxies = workspace.perform(allAppsSelector)?.takeUnretainedValue() as? [NSObject] else {
-                print("Error: Could not get allInstalledApplications")
-                DispatchQueue.main.async { self.isLoading = false }
+                DispatchQueue.main.async {
+                    self.errorMessage = "错误: 无法获取应用列表 (可能是权限不足，请确保使用巨魔安装并拥有 entitlements)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -65,20 +74,12 @@ class AppManager: ObservableObject {
             }
             
             DispatchQueue.main.async {
-                if fetchedApps.isEmpty {
-                    // Fallback Mock Data for UI Demonstration if real fetch fails (e.g. no entitlements)
-                    self.apps = [
-                        InstalledApp(name: "微信", bundleId: "com.tencent.xin", isSystem: false),
-                        InstalledApp(name: "抖音", bundleId: "com.ss.iphone.ugc.Aweme", isSystem: false),
-                        InstalledApp(name: "设置", bundleId: "com.apple.Preferences", isSystem: true),
-                        InstalledApp(name: "Safari", bundleId: "com.apple.mobilesafari", isSystem: true),
-                        InstalledApp(name: "App Store", bundleId: "com.apple.AppStore", isSystem: true),
-                        InstalledApp(name: "王者荣耀", bundleId: "com.tencent.smoba", isSystem: false)
-                    ]
-                } else {
-                    self.apps = fetchedApps.sorted { $0.name < $1.name }
-                }
+                self.apps = fetchedApps.sorted { $0.name < $1.name }
                 self.isLoading = false
+                
+                if self.apps.isEmpty {
+                    self.errorMessage = "未找到任何应用 (请检查应用签名权限)"
+                }
             }
         }
     }

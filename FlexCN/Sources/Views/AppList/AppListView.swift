@@ -32,6 +32,19 @@ struct AppListView: View {
                 
                 if appManager.isLoading {
                     ProgressView("加载应用列表中...")
+                } else if let error = appManager.errorMessage {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                            .foregroundColor(.secondary)
+                        Button("重试") {
+                            appManager.fetchApps()
+                        }
+                    }
                 } else {
                     List(filteredApps) { app in
                         // Pass the selected app to ClassBrowserView first, mimicking Flex3 flow
